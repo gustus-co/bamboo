@@ -14,7 +14,7 @@ func (gf GuardFunc) Do(ctx context.Context, fn func(ctx context.Context) (any, e
 
 // Chain wraps multiple guards together into a single one.
 // The first argument becomes the outermost guard, and the last argument
-// becomes the innermost. For example, Chain(A, B, C) produces a policy
+// becomes the innermost. For example, Chain(A, B, C) produces a guard
 // that executes in the order: A -> B -> C
 func Chain(guards ...Guard) Guard {
 	return GuardFunc(func(ctx context.Context, fn func(ctx context.Context) (any, error)) (any, error) {

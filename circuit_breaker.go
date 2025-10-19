@@ -13,8 +13,6 @@ var (
 	ErrCircuitBreakerTripped = errors.New("circuit breaker tripped after consecutive failures")
 )
 
-// --- Internal state ---
-
 type breakerState int
 
 const (
@@ -41,6 +39,9 @@ func defaultCircuitBreakerConfig() circuitBreakerConfig {
 	}
 }
 
+// WithFailures sets how many consecutive failures will trip
+// the circuit breaker. Higher values make the breaker less
+// sensitive while lower values make it trip more quickly.
 func WithFailures(n uint) CircuitBreakerOpt {
 	return func(c *circuitBreakerConfig) {
 		if n > 0 {
@@ -49,6 +50,9 @@ func WithFailures(n uint) CircuitBreakerOpt {
 	}
 }
 
+// WithOpenDuration sets how long the circuit remains open
+// after tripping before it transitions to half-open state
+// to test recovery.
 func WithOpenDuration(d time.Duration) CircuitBreakerOpt {
 	return func(c *circuitBreakerConfig) {
 		if d > 0 {
@@ -57,6 +61,9 @@ func WithOpenDuration(d time.Duration) CircuitBreakerOpt {
 	}
 }
 
+// WithMaxRequests defines how many test requests are allowed
+// concurrently while the circuit is half-open. If any of them
+// fail, the circuit reopens immediately.
 func WithMaxRequests(n uint) CircuitBreakerOpt {
 	return func(c *circuitBreakerConfig) {
 		if n > 0 {
@@ -65,12 +72,24 @@ func WithMaxRequests(n uint) CircuitBreakerOpt {
 	}
 }
 
+// WithResetInterval resets the circuit breaker’s internal failure count after
+// the given duration if the circuit is closed. This helps
+// recover from old failures and prevents the circuit from
+// tripping due to unrelated errors.
 func WithResetInterval(d time.Duration) CircuitBreakerOpt {
 	return func(c *circuitBreakerConfig) {
 		c.resetInterval = d
 	}
 }
 
+// CircuitBreaker returns a Guard that monitors consecutive
+// operation failures and temporarily halts new attempts when the
+// failure threshold is exceeded. Once opened, it stays open for
+// the configured duration before allowing limited test requests.
+//
+// CircuitBreaker protects systems from cascading failures and
+// excessive retry storms. It differs from Retry in that it stops
+// execution entirely when failures persist rather than retrying.
 func CircuitBreaker(opts ...CircuitBreakerOpt) Guard {
 	cfg := defaultCircuitBreakerConfig()
 	for _, opt := range opts {
@@ -96,7 +115,7 @@ func CircuitBreaker(opts ...CircuitBreakerOpt) Guard {
 			lastReset = now
 		}
 
-		// move from Open → HalfOpen when timeout expires
+		// move from Open to HalfOpen when timeout expires
 		if state == Opened && now.After(nextAttempt) {
 			state = HalfOpened
 			halfOpenRunning = 0
