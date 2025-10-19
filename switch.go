@@ -1,4 +1,4 @@
-package grit
+package granit
 
 import "context"
 
