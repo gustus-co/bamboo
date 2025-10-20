@@ -82,7 +82,7 @@ func WithResetInterval(d time.Duration) CircuitBreakerOpt {
 	}
 }
 
-// CircuitBreaker returns a Guard that monitors consecutive
+// CircuitBreaker monitors consecutive
 // operation failures and temporarily halts new attempts when the
 // failure threshold is exceeded. Once opened, it stays open for
 // the configured duration before allowing limited test requests.
@@ -90,7 +90,7 @@ func WithResetInterval(d time.Duration) CircuitBreakerOpt {
 // CircuitBreaker protects systems from cascading failures and
 // excessive retry storms. It differs from Retry in that it stops
 // execution entirely when failures persist rather than retrying.
-func CircuitBreaker(opts ...CircuitBreakerOpt) Guard {
+func CircuitBreaker(opts ...CircuitBreakerOpt) Policy {
 	cfg := defaultCircuitBreakerConfig()
 	for _, opt := range opts {
 		opt(&cfg)
@@ -105,7 +105,7 @@ func CircuitBreaker(opts ...CircuitBreakerOpt) Guard {
 		halfOpenRunning uint
 	)
 
-	return GuardFunc(func(ctx context.Context, fn func(ctx context.Context) (any, error)) (any, error) {
+	return PolicyFunc(func(ctx context.Context, fn func(ctx context.Context) (any, error)) (any, error) {
 		mu.Lock()
 		now := time.Now()
 

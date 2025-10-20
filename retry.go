@@ -50,16 +50,14 @@ func WithJitter(factor float64) RetryOpt {
 	return func(c *retryConfig) { c.jitter = factor }
 }
 
-// Retry returns a Guard that re-executes the operation up to the
-// specified number of attempts when an error occurs. The retry
-// behavior can be customized with optional RetryOpts such as
-// WithBackoff and WithJitter.
+// Retry re-executes the operation up to the
+// specified number of attempts when an error occurs.
 //
-// Retry is the most common Guard for transient failures. It should
+// Retry is the most common Policy for transient failures. It should
 // be used for operations that are likely to succeed on a subsequent
 // attempt (e.g., network or I/O calls). For permanent errors,
 // combine it with ShortCircuitIf to avoid useless retries.
-func Retry(attempts int, opts ...RetryOpt) Guard {
+func Retry(attempts int, opts ...RetryOpt) Policy {
 	cfg := retryConfig{
 		backoff: Constant(0),
 		jitter:  0,
@@ -69,7 +67,7 @@ func Retry(attempts int, opts ...RetryOpt) Guard {
 		opt(&cfg)
 	}
 
-	return GuardFunc(func(ctx context.Context, fn func(ctx context.Context) (any, error)) (any, error) {
+	return PolicyFunc(func(ctx context.Context, fn func(ctx context.Context) (any, error)) (any, error) {
 		var lastErr error
 		for i := range attempts {
 			res, err := fn(ctx)
