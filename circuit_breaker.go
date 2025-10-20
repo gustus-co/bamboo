@@ -30,10 +30,6 @@ type circuitBreakerConfig struct {
 	tripWhen      func(error) bool
 }
 
-func defaultCircuitBreakerConfig() circuitBreakerConfig {
-	return
-}
-
 // WithOpenDuration sets how long the circuit remains open
 // after tripping before it transitions to half-open state
 // to test recovery.
