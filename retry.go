@@ -16,13 +16,13 @@ type retryConfig struct {
 // BackoffStrategy defines how much time to wait before each retry
 // attempt. The function receives the attempt number (0-based) and
 // returns a delay duration.
-type BackoffStrategy func(attempt int) time.Duration
+type BackoffStrategy func(attempt uint) time.Duration
 
 // Constant returns a BackoffStrategy that always waits for the
 // same duration between retries. Useful for stable but gentle retry
 // intervals or in tests.
 func Constant(d time.Duration) BackoffStrategy {
-	return func(_ int) time.Duration { return d }
+	return func(_ uint) time.Duration { return d }
 }
 
 // Exponential returns a BackoffStrategy that doubles the delay
@@ -30,7 +30,7 @@ func Constant(d time.Duration) BackoffStrategy {
 // for transient failures where rapid successive retries could
 // overload a downstream service.
 func Exponential(base time.Duration) BackoffStrategy {
-	return func(i int) time.Duration {
+	return func(i uint) time.Duration {
 		return time.Duration(1<<i) * base
 	}
 }
@@ -47,7 +47,16 @@ func WithBackoff(strategy BackoffStrategy) RetryOpt {
 // factor (0.3 = ±30%). Adding jitter prevents retry storms and
 // spreads load when multiple clients retry at the same time.
 func WithJitter(factor float64) RetryOpt {
-	return func(c *retryConfig) { c.jitter = factor }
+	return func(c *retryConfig) {
+		if factor < 0 {
+			c.jitter = 0
+			return
+		} else if factor > 1 {
+			c.jitter = 1
+			return
+		}
+		c.jitter = factor
+	}
 }
 
 // Retry re-executes the operation up to the
@@ -57,7 +66,7 @@ func WithJitter(factor float64) RetryOpt {
 // be used for operations that are likely to succeed on a subsequent
 // attempt (e.g., network or I/O calls). For permanent errors,
 // combine it with ShortCircuitIf to avoid useless retries.
-func Retry(attempts int, opts ...RetryOpt) Policy {
+func Retry(attempts uint, opts ...RetryOpt) Policy {
 	cfg := retryConfig{
 		backoff: Constant(0),
 		jitter:  0,
