@@ -11,6 +11,7 @@ type RetryOpt func(*retryConfig)
 type retryConfig struct {
 	backoff BackoffStrategy
 	jitter  float64
+	retryUntil func(error) bool
 }
 
 // BackoffStrategy defines how much time to wait before each retry
@@ -50,6 +51,13 @@ func WithJitter(factor float64) RetryOpt {
 	return func(c *retryConfig) { c.jitter = factor }
 }
 
+// WithRetryUntil specifies a predicate that when evaluated to
+// true should stop the retry. This is especially useful for known
+// non-transient errors for which retries are useless.
+func WithRetryUntil(predicate func(error) bool) RetryOpt {
+	return func(c *retryConfig) { c.retryUntil = predicate }
+}
+
 // Retry re-executes the operation up to the
 // specified number of attempts when an error occurs.
 //
@@ -61,6 +69,7 @@ func Retry(attempts uint, opts ...RetryOpt) Policy {
 	cfg := retryConfig{
 		backoff: Constant(0),
 		jitter:  0,
+		retryUntil: func(error) bool { return true },
 	}
 
 	for _, opt := range opts {
@@ -73,6 +82,9 @@ func Retry(attempts uint, opts ...RetryOpt) Policy {
 			res, err := fn(ctx)
 			if err == nil {
 				return res, nil
+			}
+			if !cfg.retryUntil(err) {
+				return nil, err
 			}
 
 			lastErr = err

@@ -27,14 +27,11 @@ type circuitBreakerConfig struct {
 	openDuration  time.Duration
 	maxRequests   uint
 	resetInterval time.Duration
+	tripWhen      func(error) bool
 }
 
 func defaultCircuitBreakerConfig() circuitBreakerConfig {
-	return circuitBreakerConfig{
-		openDuration:  30 * time.Second,
-		maxRequests:   1,
-		resetInterval: 0,
-	}
+	return
 }
 
 // WithOpenDuration sets how long the circuit remains open
@@ -69,6 +66,15 @@ func WithResetInterval(d time.Duration) CircuitBreakerOpt {
 	}
 }
 
+// WithTripWehn specifies a predicate that when evaluated to
+// true should stop the trip the circuit. This is especially useful for known
+// non-transient errors for which retries are useless.
+func WithTripWhen(predicate func(error) bool) CircuitBreakerOpt {
+	return func(c *circuitBreakerConfig) {
+		c.tripWhen = predicate
+	}
+}
+
 // CircuitBreaker monitors consecutive
 // operation failures and temporarily halts new attempts when the
 // failure threshold is exceeded. Once opened, it stays open for
@@ -78,7 +84,12 @@ func WithResetInterval(d time.Duration) CircuitBreakerOpt {
 // excessive retry storms. It differs from Retry in that it stops
 // execution entirely when failures persist rather than retrying.
 func CircuitBreaker(consecutiveFailures uint, opts ...CircuitBreakerOpt) Policy {
-	cfg := defaultCircuitBreakerConfig()
+	cfg := circuitBreakerConfig{
+		openDuration:  30 * time.Second,
+		maxRequests:   1,
+		resetInterval: 0,
+		tripWhen:      func(error) bool { return false },
+	}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
@@ -147,7 +158,7 @@ func CircuitBreaker(consecutiveFailures uint, opts ...CircuitBreakerOpt) Policy 
 			halfOpenRunning = 0
 
 		case Closed:
-			if failures >= consecutiveFailures {
+			if failures >= consecutiveFailures || cfg.tripWhen(err) {
 				state = Opened
 				nextAttempt = now.Add(cfg.openDuration)
 				return v, ErrCircuitBreakerTripped
