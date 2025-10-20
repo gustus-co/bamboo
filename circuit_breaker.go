@@ -24,29 +24,16 @@ const (
 type CircuitBreakerOpt func(*circuitBreakerConfig)
 
 type circuitBreakerConfig struct {
-	failures     uint
-	openDuration time.Duration
-	maxRequests  uint
-	resetInterval     time.Duration
+	openDuration  time.Duration
+	maxRequests   uint
+	resetInterval time.Duration
 }
 
 func defaultCircuitBreakerConfig() circuitBreakerConfig {
 	return circuitBreakerConfig{
-		failures:     5,
-		openDuration: 30 * time.Second,
-		maxRequests:  1,
-		resetInterval:     0,
-	}
-}
-
-// WithFailures sets how many consecutive failures will trip
-// the circuit breaker. Higher values make the breaker less
-// sensitive while lower values make it trip more quickly.
-func WithFailures(n uint) CircuitBreakerOpt {
-	return func(c *circuitBreakerConfig) {
-		if n > 0 {
-			c.failures = n
-		}
+		openDuration:  30 * time.Second,
+		maxRequests:   1,
+		resetInterval: 0,
 	}
 }
 
@@ -90,7 +77,7 @@ func WithResetInterval(d time.Duration) CircuitBreakerOpt {
 // CircuitBreaker protects systems from cascading failures and
 // excessive retry storms. It differs from Retry in that it stops
 // execution entirely when failures persist rather than retrying.
-func CircuitBreaker(opts ...CircuitBreakerOpt) Policy {
+func CircuitBreaker(consecutiveFailures uint, opts ...CircuitBreakerOpt) Policy {
 	cfg := defaultCircuitBreakerConfig()
 	for _, opt := range opts {
 		opt(&cfg)
@@ -160,7 +147,7 @@ func CircuitBreaker(opts ...CircuitBreakerOpt) Policy {
 			halfOpenRunning = 0
 
 		case Closed:
-			if failures >= cfg.failures {
+			if failures >= consecutiveFailures {
 				state = Opened
 				nextAttempt = now.Add(cfg.openDuration)
 				return v, ErrCircuitBreakerTripped

@@ -15,7 +15,7 @@ func (f PolicyFunc) Do(ctx context.Context, fn func(ctx context.Context) (any, e
 // Chain chains multiple policies together into a single one.
 // The first argument becomes the outermost and the last argument
 // becomes the innermost. For example, Chain(A, B, C) produces a policy
-// that executes in the order: A -> B -> C -> fn
+// that executes in the order: A -> B -> C
 func Chain(policies ...Policy) Policy {
 	return PolicyFunc(func(ctx context.Context, fn func(ctx context.Context) (any, error)) (any, error) {
 		wrapped := fn

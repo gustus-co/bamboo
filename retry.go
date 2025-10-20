@@ -47,16 +47,7 @@ func WithBackoff(strategy BackoffStrategy) RetryOpt {
 // factor (0.3 = ±30%). Adding jitter prevents retry storms and
 // spreads load when multiple clients retry at the same time.
 func WithJitter(factor float64) RetryOpt {
-	return func(c *retryConfig) {
-		if factor < 0 {
-			c.jitter = 0
-			return
-		} else if factor > 1 {
-			c.jitter = 1
-			return
-		}
-		c.jitter = factor
-	}
+	return func(c *retryConfig) { c.jitter = factor }
 }
 
 // Retry re-executes the operation up to the
