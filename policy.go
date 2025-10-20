@@ -1,4 +1,4 @@
-package granit
+package bamboo
 
 import "context"
 
