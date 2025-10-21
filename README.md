@@ -1,7 +1,11 @@
-# Bamboo — Resilience Patterns for Go
+# Bamboo
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/gustus-co/bamboo.svg)](https://pkg.go.dev/github.com/gustus-co/bamboo)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gustus-co/bamboo)](https://goreportcard.com/report/github.com/gustus-co/bamboo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Bamboo** is a lightweight, composable Go library for building resilient systems.
-It provides primitives like **Retry**, **Circuit Breaker**, **Timeout**, and more. It is designed to be clean, idiomatic, and dependency-free.
+It provides primitives like **Retry**, **Circuit Breaker**, **Timeout**, and more. It is designed to be idiomatic, and dependency-free.
 
 ---
 
@@ -19,7 +23,7 @@ It provides primitives like **Retry**, **Circuit Breaker**, **Timeout**, and mor
 ## Installation
 
 ```bash
-go get github.com/gustus-co/bamboo@latest
+go get github.com/gustus-co/bamboo
 ```
 
 ## Quickstart
@@ -72,30 +76,57 @@ Every operation is executed through:
 
 ```go
 result, err := policy.Do(ctx, func(ctx context.Context) (any, error) {
-	return someOperation(ctx)
+	return "foo", nil
 })
+res := result.(string)
 ```
 
 Bamboo provides several built-in policies:
-|Policy|Description|
+| Policy | Description |
 |---|---|
-|Retry|Retries a failing operation using backoff strategies|
-|CircuitBreaker|Halts requests after consecutive failures|
-|Timeout|Cancels an operation after a fixed duration|
-|Limiter|Restricts concurrent executions|
-|Fallback|Provides alternate logic when an operation fails|
+| `Retry` |Retries a failing operation using backoff strategies|
+| `CircuitBreaker` |Halts requests after consecutive failures|
+| `Timeout` |Cancels an operation after a fixed duration|
+| `Limiter` |Restricts concurrent executions|
+| `Fallback` |Provides alternate logic when an operation fails|
 
 
 ### **Chain**
-Policies can be composed declaratively using the `Chain` function:
+Policies can be composed using the `Chain` function:
 ```go
 resilience := bamboo.Chain(
 	bamboo.Timeout(3*time.Second),
 	bamboo.Retry(3, bamboo.WithBackoff(bamboo.Exponential(100*time.Millisecond))),
 	bamboo.CircuitBreaker(3),
 )
+result, err := resilience.Do(ctx, func(ctx context.Context) (any, error) {
+	time.Sleep(200 * time.Millisecond)
+	return "bar", nil
+})
 ```
 Execution order:
+```go
+Timeout(Retry(CircuitBreaker(yourFunction)))
 ```
-Timeout → Retry → CircuitBreaker → your function
+
+### **Custom Policies**
+You can easily define your own `Policy` using `PolicyFunc`:
+
+```go
+func LogPolicy() bamboo.Policy {
+	return bamboo.PolicyFunc(func(ctx context.Context, fn func(ctx context.Context) (any, error)) (any, error) {
+		start := time.Now()
+		defer func() { fmt.Println("operation took:", time.Since(start)) }()
+		return fn(ctx)
+	})
+}
 ```
+
+## License
+
+Bamboo is licensed under the [MIT License](LICENSE).
+
+## Contributing
+
+Issues and PRs are welcome! Bamboo aims to stay small and dependency-free.
+if you have a useful pattern or improvement, please open a discussion before submitting a PR.
