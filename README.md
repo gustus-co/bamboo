@@ -2,7 +2,8 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/gustus-co/bamboo.svg)](https://pkg.go.dev/github.com/gustus-co/bamboo)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gustus-co/bamboo)](https://goreportcard.com/report/github.com/gustus-co/bamboo)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Go Coverage](https://coder.github.io/websocket/coverage.svg)](https://coder.github.io/websocket/coverage.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Bamboo** is a lightweight, composable Go library for building resilient systems.
 It provides primitives like **Retry**, **Circuit Breaker**, **Timeout**, and more. It is designed to be idiomatic, and dependency-free.
