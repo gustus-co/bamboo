@@ -3,8 +3,6 @@
 **Bamboo** is a lightweight, composable Go library for building resilient systems.
 It provides primitives like **Retry**, **Circuit Breaker**, **Timeout**, and more. It is designed to be clean, idiomatic, and dependency-free.
 
-> “Strong yet flexible — like bamboo.”
-
 ---
 
 ## Features
@@ -54,7 +52,6 @@ func main() {
 	)
 
 	result, err := resilience.Do(ctx, func(ctx context.Context) (any, error) {
-		// Your operation here
 		return callRemoteAPI(ctx)
 	})
 	if err != nil {
@@ -75,7 +72,7 @@ Every operation is executed through:
 
 ```go
 result, err := policy.Do(ctx, func(ctx context.Context) (any, error) {
-	return yourOperation(ctx)
+	return someOperation(ctx)
 })
 ```
 
