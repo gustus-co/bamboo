@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/gustus-co/bamboo.svg)](https://pkg.go.dev/github.com/gustus-co/bamboo)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gustus-co/bamboo)](https://goreportcard.com/report/github.com/gustus-co/bamboo)
-[![Go Coverage](https://coder.github.io/websocket/coverage.svg)](https://coder.github.io/websocket/coverage.html)
+[![Coverage](https://codecov.io/github/gustus-co/bamboo/badge.svg)](https://codecov.io/github/gustus-co/bamboo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Bamboo** is a lightweight, composable Go library for building resilient systems.
